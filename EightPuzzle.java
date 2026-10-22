@@ -1,11 +1,11 @@
 /*
- * ASSIGNMENT NO. :5
- * Name:Karishma Galande
- * Roll no. :3317
- * Title :Implement 8 puzzle using A*.
- * ===========================================================================================================
+ * 8-puzzle solver using A* search.
+ * h(n) = number of misplaced tiles (blank not counted), g(n) = moves so far.
+ * Tiles are entered row by row, with 0 for the blank.
  */
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Scanner;
  class state {
 	int arr[];
@@ -23,12 +23,24 @@ import java.util.Scanner;
 	{
 		this.arr=new int[9];
 	}
+	// two states are the same if the tiles are in the same places
+	@Override
+	public boolean equals(Object o)
+	{
+		return (o instanceof state) && Arrays.equals(arr,((state)o).arr);
+	}
+	@Override
+	public int hashCode()
+	{
+		return Arrays.hashCode(arr);
+	}
 }
 
 public class EightPuzzle{
 	state gs,cs,ss;
 	ArrayList<state>openlist=new ArrayList<state>();
-	ArrayList<state>closelist=new ArrayList<state>();
+	HashSet<state>closelist=new HashSet<state>();
+	HashSet<state>openset=new HashSet<state>();     // same states as openlist, for fast lookup
 	 EightPuzzle()
 	{
 		gs=new state();
@@ -59,7 +71,7 @@ public class EightPuzzle{
 		int h=0;
 		for(int i=0;i<9;i++)
 		{
-			if(s.arr[i]!=gs.arr[i])
+			if(s.arr[i]!=0 && s.arr[i]!=gs.arr[i])
 			{
 				h++;
 			}
@@ -112,9 +124,10 @@ public class EightPuzzle{
 			ns.g=s.g+1;
 			ns.f=ns.g+h(ns);
 			ns.ptr=s;
-			if(!closelist.contains(ns))
+			if(!closelist.contains(ns) && !openset.contains(ns))
 			{
 				openlist.add(ns);
+				openset.add(ns);
 				display(ns);
 				System.out.println("f(n)="+ns.f);
 			}
@@ -127,9 +140,10 @@ public class EightPuzzle{
 			ns.g=s.g+1;
 			ns.f=ns.g+h(ns);
 			ns.ptr=s;
-			if(!closelist.contains(ns))
+			if(!closelist.contains(ns) && !openset.contains(ns))
 			{
 				openlist.add(ns);
+				openset.add(ns);
 				display(ns);
 				System.out.println("f(n)="+ns.f);
 			}
@@ -142,9 +156,10 @@ public class EightPuzzle{
 			ns.g=s.g+1;
 			ns.f=ns.g+h(ns);
 			ns.ptr=s;
-			if(!closelist.contains(ns))
+			if(!closelist.contains(ns) && !openset.contains(ns))
 			{
 				openlist.add(ns);
+				openset.add(ns);
 				display(ns);
 				System.out.println("f(n)="+ns.f);
 			}
@@ -157,9 +172,10 @@ public class EightPuzzle{
 			ns.g=s.g+1;
 			ns.f=ns.g+h(ns);
 			ns.ptr=s;
-			if(!closelist.contains(ns))
+			if(!closelist.contains(ns) && !openset.contains(ns))
 			{
 				openlist.add(ns);
+				openset.add(ns);
 				display(ns);
 				System.out.println("f(n)="+ns.f+"\n");
 			}
@@ -167,20 +183,38 @@ public class EightPuzzle{
 		
 	}
 	
+	// parity of inversions (blank ignored); start and goal must match for a solution to exist
+	int inversions(state s)
+	{
+		int inv=0;
+		for(int i=0;i<9;i++)
+			for(int j=i+1;j<9;j++)
+				if(s.arr[i]!=0 && s.arr[j]!=0 && s.arr[i]>s.arr[j])
+					inv++;
+		return inv;
+	}
+	
 	public void astar()
 	{
+		if(inversions(ss)%2!=inversions(gs)%2)
+		{
+			System.out.println("\nThis start state cannot reach the goal state.");
+			return;
+		}
 		int low=0;
 		ss.f=h(ss);
 		openlist.add(ss);
+		openset.add(ss);
 		while(!openlist.isEmpty())
 		{
 			low=lowest();
-			System.out.println("\ncurrent States with  heuristic function : ");
+			System.out.println("\nExpanding state with lowest f(n) : ");
 			cs=openlist.get(low);
 			display(cs);
 			System.out.println();
 			closelist.add(cs);
-			openlist.remove(cs);
+			openlist.remove(low);
+			openset.remove(cs);
 			if(h(cs)==0)
 			{
 				ArrayList<state>path=new ArrayList<state>();
@@ -210,7 +244,7 @@ public class EightPuzzle{
 		}
 	}
 	
-	public static void main(String srgs[])
+	public static void main(String args[])
 	{
 		EightPuzzle p=new  EightPuzzle();
 		p.input();
@@ -218,333 +252,3 @@ public class EightPuzzle{
 	
    }
 }
-/***********OUTPUT**********
- * 
- Enter start state : 
-1
-2
-3
-0
-5
-6
-4
-7
-8
-Enter Goal state : 
-1
-2
-3
-4
-5
-6
-7
-8
-0
-
-State with lowest heuristic function : 
- 1 2 3
- 0 5 6
- 4 7 8
-
- 1 2 3
- 5 0 6
- 4 7 8
-f(n)=6
- 1 2 3
- 4 5 6
- 0 7 8
-f(n)=4
- 0 2 3
- 1 5 6
- 4 7 8
-f(n)=6
-
-**************************************
-
-State with lowest heuristic function : 
- 1 2 3
- 4 5 6
- 0 7 8
-
- 1 2 3
- 4 5 6
- 7 0 8
-f(n)=4
- 1 2 3
- 0 5 6
- 4 7 8
-f(n)=6
-
-**************************************
-
-State with lowest heuristic function : 
- 1 2 3
- 4 5 6
- 7 0 8
-
- 1 2 3
- 4 5 6
- 0 7 8
-f(n)=6
- 1 2 3
- 4 5 6
- 7 8 0
-f(n)=3
- 1 2 3
- 4 0 6
- 7 5 8
-f(n)=6
-
-**************************************
-
-State with lowest heuristic function : 
- 1 2 3
- 4 5 6
- 7 8 0
-
-Path Size : 4
- 1 2 3
- 0 5 6
- 4 7 8
-
- 1 2 3
- 4 5 6
- 0 7 8
-
- 1 2 3
- 4 5 6
- 7 0 8
-
- 1 2 3
- 4 5 6
- 7 8 0
-
-
-***************************************************************
-
-Enter start state : 
-1
-3
-4
-8
-6
-2
-7
-0
-5
-Enter Goal state : 
-1
-2
-3
-8
-0
-4
-7
-6
-5
-Start state : 
- 1 3 4
- 8 6 2
- 7 0 5
-Goal state : 
- 1 2 3
- 8 0 4
- 7 6 5
-
-State with lowest heuristic function : 
- 1 3 4
- 8 6 2
- 7 0 5
-
- 1 3 4
- 8 6 2
- 0 7 5
-f(n)=7
- 1 3 4
- 8 6 2
- 7 5 0
-f(n)=7
- 1 3 4
- 8 0 2
- 7 6 5
-f(n)=4
-
-**************************************
-
-State with lowest heuristic function : 
- 1 3 4
- 8 0 2
- 7 6 5
-
- 1 3 4
- 0 8 2
- 7 6 5
-f(n)=7
- 1 3 4
- 8 2 0
- 7 6 5
-f(n)=6
- 1 3 4
- 8 6 2
- 7 0 5
-f(n)=7
- 1 0 4
- 8 3 2
- 7 6 5
-f(n)=6
-
-**************************************
-
-State with lowest heuristic function : 
- 1 3 4
- 8 2 0
- 7 6 5
-
- 1 3 4
- 8 0 2
- 7 6 5
-f(n)=6
- 1 3 4
- 8 2 5
- 7 6 0
-f(n)=8
- 1 3 0
- 8 2 4
- 7 6 5
-f(n)=6
-
-**************************************
-
-State with lowest heuristic function : 
- 1 0 4
- 8 3 2
- 7 6 5
-
- 0 1 4
- 8 3 2
- 7 6 5
-f(n)=8
- 1 4 0
- 8 3 2
- 7 6 5
-f(n)=7
- 1 3 4
- 8 0 2
- 7 6 5
-f(n)=6
-**************************************
-
-State with lowest heuristic function : 
- 1 3 4
- 8 0 2
- 7 6 5
-
- 1 3 4
- 0 8 2
- 7 6 5
-f(n)=9
- 1 3 4
- 8 2 0
- 7 6 5
-f(n)=8
- 1 3 4
- 8 6 2
- 7 0 5
-f(n)=9
- 1 0 4
- 8 3 2
- 7 6 5
-f(n)=8
-
-**************************************
-
-State with lowest heuristic function : 
- 1 3 0
- 8 2 4
- 7 6 5
-
- 1 0 3
- 8 2 4
- 7 6 5
-f(n)=6
- 1 3 4
- 8 2 0
- 7 6 5
-f(n)=8
-**************************************
-
-State with lowest heuristic function : 
- 1 3 4
- 8 0 2
- 7 6 5
-
- 1 3 4
- 0 8 2
- 7 6 5
-f(n)=9
- 1 3 4
- 8 2 0
- 7 6 5
-f(n)=8
- 1 3 4
- 8 6 2
- 7 0 5
-f(n)=9
- 1 0 4
- 8 3 2
- 7 6 5
-f(n)=8
-
-**************************************
-
-State with lowest heuristic function : 
- 1 0 3
- 8 2 4
- 7 6 5
-
- 0 1 3
- 8 2 4
- 7 6 5
-f(n)=8
- 1 3 0
- 8 2 4
- 7 6 5
-f(n)=8
- 1 2 3
- 8 0 4
- 7 6 5
-f(n)=5
-**************************************
-
-State with lowest heuristic function : 
- 1 2 3
- 8 0 4
- 7 6 5
-
-Path Size : 6
- 1 3 4
- 8 6 2
- 7 0 5
-
- 1 3 4
- 8 0 2
- 7 6 5
-
- 1 3 4
- 8 2 0
- 7 6 5
-
- 1 3 0
- 8 2 4
- 7 6 5
-
- 1 0 3
- 8 2 4
- 7 6 5
-
- 1 2 3
- 8 0 4
- 7 6 5
-
- * */
- 
